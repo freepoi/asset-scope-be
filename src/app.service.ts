@@ -22,9 +22,7 @@ export class AppService {
     const signature = createHmac('sha256', secret)
       .update(content)
       .digest('base64');
-    const apiURLBase = this.configService.get(
-      EnvOptionName.BITGET_URL_BASE,
-    );
+    const apiURLBase = this.configService.get(EnvOptionName.BITGET_URL_BASE);
 
     const url = `${apiURLBase}${requestPath}`;
     const headers = {
@@ -57,9 +55,7 @@ export class AppService {
     const signature = createHmac('sha256', secret)
       .update(content)
       .digest('base64');
-    const apiURLBase = this.configService.get(
-      EnvOptionName.BITGET_URL_BASE,
-    );
+    const apiURLBase = this.configService.get(EnvOptionName.BITGET_URL_BASE);
 
     const url = `${apiURLBase}${requestPath}`;
     const headers = {
