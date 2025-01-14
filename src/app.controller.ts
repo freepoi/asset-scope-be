@@ -1,10 +1,13 @@
 import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
-import { FundingAsset } from './core/dto/bitget/funding-asset';
+import { GateAssetService } from './gate-asset.service';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly appService: AppService,
+    private readonly gateAssetService: GateAssetService,
+  ) {}
 
   @Get()
   getHello(): string {
@@ -12,7 +15,14 @@ export class AppController {
   }
 
   @Get('assets')
-  getAssets(): Promise<FundingAsset[]> {
+  getAssets() {
     return this.appService.listAssets();
+  }
+
+  @Get('balance/gate')
+  async getGateTotalBalance() {
+    const total = await this.gateAssetService.getTotalBalance();
+
+    return `${total.total.amount.split('.')[0]} ${total.total.currency}`;
   }
 }
