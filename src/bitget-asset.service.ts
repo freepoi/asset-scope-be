@@ -1,38 +1,44 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import BigNumber from 'bignumber.js';
 
 import { EnvOptionName } from './core/enum/config-variable-name';
 import { BitgetRestClient } from './core/connectors/bitget/client/rest-client';
-import BigNumber from 'bignumber.js';
+import { ClientBaseService } from './client-base.service';
 
 @Injectable()
-export class BitgetAssetService {
-  private apiKey: string;
-  private apiSecret: string;
-  private apiPassPhrase: string;
-  private client: BitgetRestClient;
-
-  constructor(private configService: ConfigService) {
-    this.apiKey = this.configService.get(EnvOptionName.BITGET_API_KEY);
-    this.apiSecret = this.configService.get(EnvOptionName.BITGET_API_SECRET);
-    this.apiPassPhrase = this.configService.get(
-      EnvOptionName.BITGET_API_PASSPHRASE,
-    );
-    this.client = new BitgetRestClient(
-      {
-        apiKey: this.apiKey,
-        apiSecret: this.apiSecret,
-        apiPassPhrase: this.apiPassPhrase,
-      },
-      this.configService.get(EnvOptionName.BITGET_API_ENDPOINT_BASE),
-    );
+export class BitgetAssetService extends ClientBaseService<BitgetRestClient> {
+  constructor(protected configService: ConfigService) {
+    super(configService, EnvOptionName.bitget, BitgetRestClient);
   }
 
-  async getTotalBalance() {
-    const total = await this.client.getAllAccountBalance();
+  protected getCreationParams(): ConstructorParameters<
+    typeof BitgetRestClient
+  > {
+    return [
+      {
+        apiKey: this.config.key_pairs[0].api_key,
+        apiSecret: this.config.key_pairs[0].api_secret,
+        apiPassPhrase: this.config.key_pairs[0].api_passphrase,
+      },
+      this.config.api_endpoint_base,
+    ];
+  }
 
-    return total.reduce(
-      (acc, value) => acc.plus(value.usdtBalance),
+  async getTotalBalance(key?: string) {
+    const clients = this.getClients(key);
+    const multipleBalances = await Promise.all(
+      clients.map(client => client.getAllAccountBalance()),
+    );
+
+    return multipleBalances.reduce(
+      (acc: BigNumber, curr) =>
+        acc.plus(
+          curr.reduce(
+            (acc, value) => acc.plus(value.usdtBalance),
+            BigNumber(0),
+          ),
+        ),
       BigNumber(0),
     );
   }

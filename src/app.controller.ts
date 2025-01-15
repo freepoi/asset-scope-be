@@ -1,9 +1,9 @@
 import { Controller, Get } from '@nestjs/common';
+
 import { GateAssetService } from './gate-asset.service';
 import { BinanceAssetService } from './binance-asset.service';
 import { OkxAssetService } from './okx-asset.service';
 import { BitgetAssetService } from './bitget-asset.service';
-import BigNumber from 'bignumber.js';
 
 @Controller()
 export class AppController {
@@ -23,7 +23,14 @@ export class AppController {
         this.okxAssetService.getTotalBalance(),
         this.bitgetAssetService.getTotalBalance(),
       ]);
-    const balance = BigNumber(gateBalance)
+
+    console.log(
+      gateBalance.toFixed(0),
+      binanceBalance.toFixed(0),
+      okxBalance.toFixed(0),
+      bitgetBalance.toFixed(0),
+    );
+    const balance = gateBalance
       .plus(binanceBalance)
       .plus(okxBalance)
       .plus(bitgetBalance)
