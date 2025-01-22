@@ -5,6 +5,7 @@ import BigNumber from 'bignumber.js';
 import { EnvOptionName } from './core/enum/config-variable-name';
 import { BnAPI } from './core/connectors/binance';
 import { ClientBaseService } from './client-base.service';
+import { KeyPair } from './config/configuration';
 
 @Injectable()
 export class BinanceAssetService extends ClientBaseService<BnAPI> {
@@ -12,12 +13,10 @@ export class BinanceAssetService extends ClientBaseService<BnAPI> {
     super(configService, EnvOptionName.binance, BnAPI);
   }
 
-  protected getCreationParams(): ConstructorParameters<typeof BnAPI> {
-    return [
-      this.config.key_pairs[0].api_key,
-      this.config.key_pairs[0].api_secret,
-      {},
-    ];
+  protected getCreationParams(
+    pair: KeyPair,
+  ): ConstructorParameters<typeof BnAPI> {
+    return [pair.api_key, pair.api_secret, {}];
   }
 
   async getTotalBalance(key?: string) {
@@ -27,16 +26,18 @@ export class BinanceAssetService extends ClientBaseService<BnAPI> {
     );
     const btcPrice = await this.getSymbolPriceVsUsdt('BTC');
 
-    return walletBalances
-      .filter(wallet => wallet[0].balance !== '0')
-      .map(wallet => ({
-        ...wallet,
-        balance: BigNumber(wallet[0].balance).multipliedBy(btcPrice),
-      }))
-      .reduce(
-        (acc: BigNumber, wallet) => acc.plus(wallet.balance),
-        BigNumber(0),
-      );
+    walletBalances.forEach((wallet, i) =>
+      console.log(`binance ${this.config.key_pairs[i].name}`, wallet),
+    );
+
+    return walletBalances.map((wallet, i) => ({
+      name: this.config.key_pairs[i].name,
+      uid: this.config.key_pairs[i].uid,
+      balance: wallet
+        .reduce((acc, curr) => acc.plus(curr.balance), BigNumber(0))
+        .multipliedBy(btcPrice),
+      wallets: wallet,
+    }));
   }
 
   async getSymbolPriceVsUsdt(symbol: string) {

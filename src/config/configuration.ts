@@ -6,6 +6,8 @@ export type KeyPair = {
   api_key: string;
   api_secret: string;
   api_passphrase?: string;
+  name: string;
+  uid: string;
 };
 
 export type ExchangeConfig = {

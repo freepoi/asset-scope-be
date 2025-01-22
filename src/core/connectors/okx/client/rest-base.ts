@@ -1,4 +1,4 @@
-import { HttpException } from '@nestjs/common';
+import { HttpException, Logger } from '@nestjs/common';
 import { createHmac } from 'crypto';
 
 import { APICredentials, Method } from '../types';
@@ -49,6 +49,9 @@ export default abstract class OkxBaseRestClient {
     params: object | undefined,
     isPublicApi?: boolean,
   ): Promise<any> {
+    Logger.debug(
+      `From ${this.apiKey}, ${method} ${endpoint} at ${new Date().toLocaleString()}`,
+    );
     const isNoBody = ['GET'].includes(method);
     const serializedParams = serializeParams(params, method);
     const body = isNoBody ? undefined : serializedParams;
@@ -89,7 +92,7 @@ export default abstract class OkxBaseRestClient {
       const json: { msg: string; code: number } = await res.json();
 
       throw new HttpException(
-        `Failed to fetch assets: ${res.statusText} ${res.status} ${JSON.stringify(json)}`,
+        `Failed to fetch Okx assets, link: ${url}, status: ${res.status} ${res.statusText}, message: ${JSON.stringify(json)}`,
         500,
       );
     }

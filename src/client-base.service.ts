@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { EnvOptionName } from './core/enum/config-variable-name';
-import { ExchangeConfig } from './config/configuration';
+import { ExchangeConfig, KeyPair } from './config/configuration';
 
 type KeyPairKeyString = string;
 
@@ -29,7 +29,7 @@ export abstract class ClientBaseService<Client> {
     }
 
     this.clients = this.config.key_pairs.map(
-      () => new clientClass(...this.getCreationParams()),
+      pair => new clientClass(...this.getCreationParams(pair)),
     );
     this.clientsMap = this.clients.reduce(
       (acc: Record<KeyPairKeyString, Client>, client, i) => {
@@ -41,7 +41,7 @@ export abstract class ClientBaseService<Client> {
     );
   }
 
-  protected abstract getCreationParams(): any[];
+  protected abstract getCreationParams(pair: KeyPair): any[];
 
   protected getClients(key?: string): Client[] {
     return key

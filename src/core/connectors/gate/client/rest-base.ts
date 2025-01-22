@@ -1,4 +1,4 @@
-import { HttpException } from '@nestjs/common';
+import { HttpException, Logger } from '@nestjs/common';
 import { createHash, createHmac } from 'crypto';
 
 import { APICredentials, Method } from '../types';
@@ -45,6 +45,9 @@ export abstract class GateBaseRestClient {
     params: object | undefined,
     isPublicApi?: boolean,
   ): Promise<T> {
+    Logger.debug(
+      `From ${this.apiKey}, ${method} ${path} at ${new Date().toLocaleString()}`,
+    );
     const isNoneBody = ['GET'].includes(method);
     const queryString = isNoneBody ? this.serializeQueryString(params) : '';
     const bodyString = isNoneBody ? '' : JSON.stringify(params);
@@ -85,7 +88,7 @@ export abstract class GateBaseRestClient {
       const json: { msg: string; code: number } = await res.json();
 
       throw new HttpException(
-        `Failed to fetch assets: ${res.statusText} ${res.status} ${JSON.stringify(json)}`,
+        `Failed to fetch gate assets, link: ${url}, status: ${res.status} ${res.statusText}, message: ${JSON.stringify(json)}`,
         500,
       );
     }

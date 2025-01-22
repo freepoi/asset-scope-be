@@ -5,6 +5,7 @@ import BigNumber from 'bignumber.js';
 import { EnvOptionName } from './core/enum/config-variable-name';
 import { BitgetRestClient } from './core/connectors/bitget/client/rest-client';
 import { ClientBaseService } from './client-base.service';
+import { KeyPair } from './config/configuration';
 
 @Injectable()
 export class BitgetAssetService extends ClientBaseService<BitgetRestClient> {
@@ -12,14 +13,14 @@ export class BitgetAssetService extends ClientBaseService<BitgetRestClient> {
     super(configService, EnvOptionName.bitget, BitgetRestClient);
   }
 
-  protected getCreationParams(): ConstructorParameters<
-    typeof BitgetRestClient
-  > {
+  protected getCreationParams(
+    pair: KeyPair,
+  ): ConstructorParameters<typeof BitgetRestClient> {
     return [
       {
-        apiKey: this.config.key_pairs[0].api_key,
-        apiSecret: this.config.key_pairs[0].api_secret,
-        apiPassPhrase: this.config.key_pairs[0].api_passphrase,
+        apiKey: pair.api_key,
+        apiSecret: pair.api_secret,
+        apiPassPhrase: pair.api_passphrase,
       },
       this.config.api_endpoint_base,
     ];
@@ -31,15 +32,33 @@ export class BitgetAssetService extends ClientBaseService<BitgetRestClient> {
       clients.map(client => client.getAllAccountBalance()),
     );
 
-    return multipleBalances.reduce(
-      (acc: BigNumber, curr) =>
-        acc.plus(
-          curr.reduce(
-            (acc, value) => acc.plus(value.usdtBalance),
-            BigNumber(0),
-          ),
-        ),
-      BigNumber(0),
+    return multipleBalances.map((balances, i) => ({
+      name: this.config.key_pairs[i].name,
+      uid: this.config.key_pairs[i].uid,
+      balance: balances.reduce(
+        (acc, value) => acc.plus(value.usdtBalance),
+        BigNumber(0),
+      ),
+      wallets: balances.map(account => ({
+        name: account.accountType,
+        balance: account.usdtBalance,
+      })),
+    }));
+  }
+
+  async getSpotAssets() {
+    const accounts = await Promise.all(
+      this.getClients().map(client => client.getSpotAccountAssets()),
     );
+
+    return accounts;
+  }
+
+  async getEarnAssets() {
+    const accounts = await Promise.all(
+      this.getClients().map(client => client.getEarnAccountAssets()),
+    );
+
+    return accounts;
   }
 }
